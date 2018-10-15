@@ -1,5 +1,4 @@
 import re
-import sys
 import json
 import argparse
 from requests import get
