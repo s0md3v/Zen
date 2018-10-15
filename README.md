@@ -17,6 +17,8 @@
   </a>
 </p>
 
+![demo](https://image.ibb.co/cTgivf/Screenshot-2018-10-15-15-16-25.png)
+
 #### Find email address of a user
 `python zen.py username`
 
