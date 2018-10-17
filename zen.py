@@ -91,12 +91,9 @@ def findEmailFromUsername(username):
 	for repo in repos:
 		email = findEmailFromContributor(username, repo, username)
 		if email:
-<<<<<<< HEAD
-			print (username + ' : ' + email)	
-=======
+			print (username + ' : ' + email)
 			print (username + ' : ' + email)
 			jsonOutput[username] = email
->>>>>>> upstream/master
 			break
 
 def findEmailsFromRepo(username, repo):
@@ -105,7 +102,6 @@ def findEmailsFromRepo(username, repo):
 	flash(findEmailFromUsername, usernames)
 	for contributor in contributors:
 		email = (findEmailFromContributor(username, repo, contributor))
-<<<<<<< HEAD
 		print (contributor + ' : ' + email)
 		if breach:
 			haveIBeenPawned(email)
@@ -115,22 +111,18 @@ def findEmailsFromRepo(username, repo):
 		savefile = open(output, 'w+')
 		savefile.write(json_string)
 		savefile.close()
-=======
->>>>>>> upstream/master
 
 def findUsersFromOrganization(username):
 	response = get('https://api.github.com/orgs/%s/members?per_page=100' % username, auth=HTTPBasicAuth(uname, '')).text
 	members = re.findall(r'"login":"(.*?)"', response)
 	return members
 
-<<<<<<< HEAD
 def haveIBeenPawned(email):
 	url = 'https://haveibeenpwned.com/api/v2/breachedaccount/'+ email
 	response = get(url)
 	if response.status_code==200:
 		Data=json.loads(response.content)
 		print("%sThis email has been appeared in data breach for the first time on  %s\n%sFor more info %s" %(bad,Data[0]['BreachDate'],info,url))
-=======
 def threader(function, arg):
     threads = []
     for i in arg:
@@ -147,7 +139,6 @@ def flash(function, arg):
         end = begin + thread_count
         splitted = arg[begin:end]
         threader(function, splitted)
->>>>>>> upstream/master
 
 if targetOrganization:
 	usernames = findUsersFromOrganization(username)
