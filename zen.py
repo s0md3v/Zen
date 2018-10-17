@@ -11,9 +11,11 @@ parser.add_argument('-o', help='output file', dest='output')
 parser.add_argument('-u', help='your username', dest='uname')
 parser.add_argument('-t', help='number of threads', dest='threads', type=int)
 parser.add_argument('--org', help='organization', dest='org', action='store_true')
+parser.add_argument('--breach', help='check emails for breach', dest='breach', action='store_true')
 args = parser.parse_args()
 
 inp = args.target
+breach = args.target
 output = args.output
 organization = args.org
 uname = args.uname or ''
@@ -78,6 +80,16 @@ def findEmailFromContributor(username, repo, contributor):
 	email = re.search(r'<(.*)>', commitDetails)
 	if email:
 		email = email.group(1)
+		if breach:
+			jsonOutput[contributor] = {}
+			jsonOutput[contributor]['email'] = email
+			if get('https://haveibeenpwned.com/api/v2/breachedaccount/' + email).status_code == 200:
+				email = email + ' \033[1;31m[\033[0mpwned\033[1;31m]\033[0m'
+				jsonOutput[contributor]['pwned'] = True
+			else:
+				jsonOutput[contributor]['pwned'] = False
+		else:
+			jsonOutput[contributor] = email
 	return email
 
 def findEmailFromUsername(username):
@@ -86,15 +98,15 @@ def findEmailFromUsername(username):
 		email = findEmailFromContributor(username, repo, username)
 		if email:
 			print (username + ' : ' + email)
-			jsonOutput[username] = email
 			break
 
 def findEmailsFromRepo(username, repo):
 	contributors = findContributorsFromRepo(username, repo)
 	print ('%s Total contributors: %s%i%s' % (info, green, len(contributors), end))
-	flash(findEmailFromUsername, usernames)
 	for contributor in contributors:
 		email = (findEmailFromContributor(username, repo, contributor))
+		if email:
+			print (contributor + ' : ' + email)
 
 def findUsersFromOrganization(username):
 	response = get('https://api.github.com/orgs/%s/members?per_page=100' % username, auth=HTTPBasicAuth(uname, '')).text
