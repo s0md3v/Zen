@@ -17,7 +17,7 @@
   </a>
 </p>
 
-![demo](https://image.ibb.co/cTgivf/Screenshot-2018-10-15-15-16-25.png)
+![demo](https://image.ibb.co/nenkff/Screenshot-2018-10-17-21-41-53.png)
 
 #### Find email address of a user
 `python zen.py username`
@@ -50,3 +50,8 @@ You don't need to generate any kind of authenticated token, just supply your use
 Zen supports multi-threading for faster data retrieval.
 
 `python zen.py IBM --org -t 20`
+
+#### Check if email has appeared in a breach
+Zen uses haveibeenpwned.com API to check if an email has been breached or not. This feature is turned off by default and can be used with `--breach` option as follows
+
+`python zen.py s0md3v --breach`
