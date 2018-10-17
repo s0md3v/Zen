@@ -39,3 +39,14 @@ or
 
 #### Save JSON output to a file
 `python zen.py https://github.com/username/repository -o /path/to/file`
+
+#### Rate limiting
+Github allows 60 unauthenticated requests per hour but limit for authenticated requests is 6000 per hour.
+You don't need to generate any kind of authenticated token, just supply your username via `-u` option as follows:
+
+`python zen.py username -u yourUsername`
+
+#### Threading
+Zen supports multi-threading for faster data retrieval.
+
+`python zen.py IBM --org -t 20`
