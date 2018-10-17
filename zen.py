@@ -11,16 +11,15 @@ parser.add_argument('-o', help='output file', dest='output')
 parser.add_argument('-u', help='your username', dest='uname')
 parser.add_argument('-t', help='number of threads', dest='threads', type=int)
 parser.add_argument('--org', help='organization', dest='org', action='store_true')
-parser.add_argument('--breach', help='Breach details about emails', action='store_true')
+parser.add_argument('--breach', help='check emails for breach', dest='breach', action='store_true')
 args = parser.parse_args()
 
 inp = args.target
+breach = args.target
 output = args.output
 organization = args.org
 uname = args.uname or ''
 thread_count = args.threads or 2
-
-breach = False
 
 end = '\033[1;m'
 green = '\033[1;32m'
@@ -56,9 +55,6 @@ else:
 	print ('%s Invalid input' % bad)
 	quit()
 
-if args.breach:
-	breach = True
-
 def findContributorsFromRepo(username, repo):
 	response = get('https://api.github.com/repos/%s/%s/contributors?per_page=100' % (username, repo), auth=HTTPBasicAuth(uname, '')).text
 	contributors = re.findall(r'https://github\.com/(.*?)"', response)
@@ -84,6 +80,16 @@ def findEmailFromContributor(username, repo, contributor):
 	email = re.search(r'<(.*)>', commitDetails)
 	if email:
 		email = email.group(1)
+		if breach:
+			jsonOutput[contributor] = {}
+			jsonOutput[contributor]['email'] = email
+			if get('https://haveibeenpwned.com/api/v2/breachedaccount/' + email).status_code == 200:
+				email = email + ' \033[1;31m[\033[0mpwned\033[1;31m]\033[0m'
+				jsonOutput[contributor]['pwned'] = True
+			else:
+				jsonOutput[contributor]['pwned'] = False
+		else:
+			jsonOutput[contributor] = email
 	return email
 
 def findEmailFromUsername(username):
@@ -92,37 +98,21 @@ def findEmailFromUsername(username):
 		email = findEmailFromContributor(username, repo, username)
 		if email:
 			print (username + ' : ' + email)
-			print (username + ' : ' + email)
-			jsonOutput[username] = email
 			break
 
 def findEmailsFromRepo(username, repo):
 	contributors = findContributorsFromRepo(username, repo)
 	print ('%s Total contributors: %s%i%s' % (info, green, len(contributors), end))
-	flash(findEmailFromUsername, usernames)
 	for contributor in contributors:
 		email = (findEmailFromContributor(username, repo, contributor))
-		print (contributor + ' : ' + email)
-		if breach:
-			haveIBeenPawned(email)
-		jsonOutput[contributor] = email
-	if output:
-		json_string = json.dumps(jsonOutput, indent=4)
-		savefile = open(output, 'w+')
-		savefile.write(json_string)
-		savefile.close()
+		if email:
+			print (contributor + ' : ' + email)
 
 def findUsersFromOrganization(username):
 	response = get('https://api.github.com/orgs/%s/members?per_page=100' % username, auth=HTTPBasicAuth(uname, '')).text
 	members = re.findall(r'"login":"(.*?)"', response)
 	return members
 
-def haveIBeenPawned(email):
-	url = 'https://haveibeenpwned.com/api/v2/breachedaccount/'+ email
-	response = get(url)
-	if response.status_code==200:
-		Data=json.loads(response.content)
-		print("%sThis email has been appeared in data breach for the first time on  %s\n%sFor more info %s" %(bad,Data[0]['BreachDate'],info,url))
 def threader(function, arg):
     threads = []
     for i in arg:
