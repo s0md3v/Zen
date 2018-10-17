@@ -71,7 +71,7 @@ def findEmailFromUsername(username):
 	for repo in repos:
 		email = findEmailFromContributor(username, repo, username)
 		if email:
-			print (username + ' : ' + email)
+			print (username + ' : ' + email)	
 			break
 
 def findEmailsFromRepo(username, repo):
@@ -81,6 +81,7 @@ def findEmailsFromRepo(username, repo):
 	for contributor in contributors:
 		email = (findEmailFromContributor(username, repo, contributor))
 		print (contributor + ' : ' + email)
+		haveIBeenPawned(email)
 		jsonOutput[contributor] = email
 	if output:
 		json_string = json.dumps(jsonOutput, indent=4)
@@ -92,6 +93,13 @@ def findUsersFromOrganization(username):
 	response = get('https://api.github.com/orgs/%s/members?per_page=100' % username).text
 	members = re.findall(r'"login":"(.*?)"', response)
 	return members
+
+def haveIBeenPawned(email):
+	url = 'https://haveibeenpwned.com/api/v2/breachedaccount/'+ email
+	response = get(url)
+	if response.status_code==200:
+		Data=json.loads(response.content)
+		print("%sThis email has been appeared in data breach for the first time on  %s\n%sFor more info %s" %(bad,Data[0]['BreachDate'],info,url))
 
 if targetOrganization:
 	usernames = findUsersFromOrganization(username)
