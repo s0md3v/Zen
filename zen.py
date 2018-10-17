@@ -7,11 +7,14 @@ parser = argparse.ArgumentParser()
 parser.add_argument('target', help='target')
 parser.add_argument('-o', help='output file', dest='output')
 parser.add_argument('--org', help='organization', dest='org', action='store_true')
+parser.add_argument('--breach', help='Breach details about emails', action='store_true')
 args = parser.parse_args()
 
 inp = args.target
 output = args.output
 organization = args.org
+
+breach = False
 
 end = '\033[1;m'
 green = '\033[1;32m'
@@ -44,6 +47,9 @@ elif inp.count('/') == 4:
 else:
 	print ('%s Invalid input' % bad)
 	quit()
+
+if args.breach:
+	breach = True
 
 def findContributorsFromRepo(username, repo):
 	response = get('https://api.github.com/repos/%s/%s/contributors?per_page=100' % (username, repo)).text
@@ -81,7 +87,8 @@ def findEmailsFromRepo(username, repo):
 	for contributor in contributors:
 		email = (findEmailFromContributor(username, repo, contributor))
 		print (contributor + ' : ' + email)
-		haveIBeenPawned(email)
+		if breach:
+			haveIBeenPawned(email)
 		jsonOutput[contributor] = email
 	if output:
 		json_string = json.dumps(jsonOutput, indent=4)
