@@ -2,8 +2,12 @@ import re
 import json
 import argparse
 import threading
-from requests import get
-from requests.auth import HTTPBasicAuth
+try:
+	import urllib.request as urlib_alias 
+	from urllib.error import HTTPError 
+except ImportError:
+	import urllib2 as urlib_alias
+	from urllib2 import HTTPError
 
 parser = argparse.ArgumentParser()
 parser.add_argument('target', help='target')
@@ -27,11 +31,13 @@ bad = '\033[1;31m[-]\033[1;m'
 info = '\033[1;33m[!]\033[1;m'
 
 print ('''%s
-	Z E N v1.0
+ _____ _____ _____          ___     ___                                             
+|__   |   __|   | |     _ _|_  |   |_  |  
+|   __|   __| | | |    | | |_| |_ _ _| |_ 
+|_____|_____|_|___|     \_/|_____|_|_____|                                                       
 %s''' % (green, end))
 
-if inp.endswith('/'):
-	inp = inp[:-1]
+inp = inp.strip(" /")
 
 targetOrganization = targetRepo = targetUser = False
 
@@ -55,13 +61,31 @@ else:
 	print ('%s Invalid input' % bad)
 	quit()
 
+password_mgr = urlib_alias.HTTPPasswordMgrWithDefaultRealm()
+password_mgr.add_password(None, "https://api.github.com", username, '')
+handler = urlib_alias.HTTPBasicAuthHandler(password_mgr)
+opener = urlib_alias.build_opener(handler)
+urlib_alias.install_opener(opener) 
+
+def get(url):
+	try:
+		f = urlib_alias.urlopen(url)
+		try:
+			body = f.read().decode("utf-8")
+		finally:
+			f.close()
+	except HTTPError:
+		body =""
+	return body
+
+
 def findContributorsFromRepo(username, repo):
-	response = get('https://api.github.com/repos/%s/%s/contributors?per_page=100' % (username, repo), auth=HTTPBasicAuth(uname, '')).text
+	response = get('https://api.github.com/repos/%s/%s/contributors?per_page=100' % (username, repo))
 	contributors = re.findall(r'https://github\.com/(.*?)"', response)
 	return contributors
 
 def findReposFromUsername(username):
-	response = get('https://api.github.com/users/%s/repos?per_page=100&sort=pushed' % username, auth=HTTPBasicAuth(uname, '')).text
+	response = get('https://api.github.com/users/%s/repos?per_page=100&sort=pushed' % username)
 	repos = re.findall(r'"full_name":"%s/(.*?)",.*?"fork":(.*?),' % username, response)
 	nonForkedRepos = []
 	for repo in repos:
@@ -70,20 +94,20 @@ def findReposFromUsername(username):
 	return nonForkedRepos
 
 def findEmailFromContributor(username, repo, contributor):
-	response = get('https://github.com/%s/%s/commits?author=%s' % (username, repo, contributor), auth=HTTPBasicAuth(uname, '')).text
+	response = get('https://github.com/%s/%s/commits?author=%s' % (username, repo, contributor))
 	latestCommit = re.search(r'href="/%s/%s/commit/(.*?)"' % (username, repo), response)
 	if latestCommit:
 		latestCommit = latestCommit.group(1)
 	else:
 		latestCommit = 'dummy'
-	commitDetails = get('https://github.com/%s/%s/commit/%s.patch' % (username, repo, latestCommit), auth=HTTPBasicAuth(uname, '')).text
-	email = re.search(r'<(.*)>', commitDetails)
+	commitDetails = get('https://github.com/%s/%s/commit/%s.patch' % (username, repo, latestCommit))
+	email = re.search(r'<(.*)>\nDate', commitDetails)
 	if email:
 		email = email.group(1)
 		if breach:
 			jsonOutput[contributor] = {}
 			jsonOutput[contributor]['email'] = email
-			if get('https://haveibeenpwned.com/api/v2/breachedaccount/' + email).status_code == 200:
+			if get('https://haveibeenpwned.com/api/v2/breachedaccount/' + email):
 				email = email + ' \033[1;31m[\033[0mpwned\033[1;31m]\033[0m'
 				jsonOutput[contributor]['pwned'] = True
 			else:
@@ -109,7 +133,7 @@ def findEmailsFromRepo(username, repo):
 			print (contributor + ' : ' + email)
 
 def findUsersFromOrganization(username):
-	response = get('https://api.github.com/orgs/%s/members?per_page=100' % username, auth=HTTPBasicAuth(uname, '')).text
+	response = get('https://api.github.com/orgs/%s/members?per_page=100' % username)
 	members = re.findall(r'"login":"(.*?)"', response)
 	return members
 
@@ -129,16 +153,19 @@ def flash(function, arg):
         end = begin + thread_count
         splitted = arg[begin:end]
         threader(function, splitted)
+def main():
+	if targetOrganization:
+		usernames = findUsersFromOrganization(username)
+		flash(findEmailFromUsername, usernames)
+	elif targetUser:
+		findEmailFromUsername(username)
+	elif targetRepo:
+		findEmailsFromRepo(username, repo)
 
-if targetOrganization:
-	usernames = findUsersFromOrganization(username)
-	flash(findEmailFromUsername, usernames)
-elif targetUser:
-	findEmailFromUsername(username)
-elif targetRepo:
-	findEmailsFromRepo(username, repo)
-if output:
-	json_string = json.dumps(jsonOutput, indent=4)
-	savefile = open(output, 'w+')
-	savefile.write(json_string)
-	savefile.close()
+	if output:
+		json_string = json.dumps(jsonOutput, indent=4)
+		with open(output, 'w+') as f:
+			f.write(json_string)
+
+if __name__ == "__main__":
+	main()
