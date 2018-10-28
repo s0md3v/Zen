@@ -1,4 +1,5 @@
 import re
+import sys
 import json
 import argparse
 import threading
@@ -21,10 +22,17 @@ organization = args.org
 uname = args.uname or ''
 thread_count = args.threads or 2
 
-end = '\033[1;m'
-green = '\033[1;32m'
-bad = '\033[1;31m[-]\033[1;m'
-info = '\033[1;33m[!]\033[1;m'
+colors = True # Output should be colored
+machine = sys.platform # Detecting the os of current system
+if machine.lower().startswith(('os', 'win', 'darwin', 'ios')):
+    colors = False # Colors shouldn't be displayed in mac & windows
+if not colors:
+    end = green = bad = info =  ''
+else:
+    end = '\033[1;m'
+    green = '\033[1;32m'
+    bad = '\033[1;31m[-]\033[1;m'
+    info = '\033[1;33m[!]\033[1;m'
 
 print ('''%s
 	Z E N v1.0
