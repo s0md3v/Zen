@@ -27,12 +27,16 @@ machine = sys.platform # Detecting the os of current system
 if machine.lower().startswith(('os', 'win', 'darwin', 'ios')):
     colors = False # Colors shouldn't be displayed in mac & windows
 if not colors:
-    end = green = bad = info =  ''
+    end = green = bad = info = ''
+    start = ' ['
+    stop = ']'
 else:
     end = '\033[1;m'
     green = '\033[1;32m'
     bad = '\033[1;31m[-]\033[1;m'
     info = '\033[1;33m[!]\033[1;m'
+    start = ' \033[1;31m[\033[0m'
+    stop = '\033[1;31m]\033[0m'
 
 print ('''%s
 	Z E N v1.0
@@ -92,7 +96,7 @@ def findEmailFromContributor(username, repo, contributor):
 			jsonOutput[contributor] = {}
 			jsonOutput[contributor]['email'] = email
 			if get('https://haveibeenpwned.com/api/v2/breachedaccount/' + email).status_code == 200:
-				email = email + ' \033[1;31m[\033[0mpwned\033[1;31m]\033[0m'
+				email = email + start + 'pwned' + stop
 				jsonOutput[contributor]['pwned'] = True
 			else:
 				jsonOutput[contributor]['pwned'] = False
