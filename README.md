@@ -19,6 +19,11 @@
 
 ![demo](https://image.ibb.co/nenkff/Screenshot-2018-10-17-21-41-53.png)
 
+#### Install on Linux with OTinstaller
+[OTinstaller](https://github.com/OSINTVerseHQ/OTinstaller) is a third-party tool manager that clones this repository and installs Zen into its own virtualenv. It isn't maintained by the Zen author, so please report problems with it [on the OTinstaller tracker](https://github.com/OSINTVerseHQ/OTinstaller/issues).
+
+Run `pipx install otinstaller`, then `otinstaller init` and `otinstaller install zen`, and use it with `otinstaller run zen -- username` (same as `python zen.py username`). Zen still queries the GitHub API/site, so a `-u yourUsername` for higher rate limits is recommended.
+
 #### Find email address of a user
 `python zen.py username`
 
